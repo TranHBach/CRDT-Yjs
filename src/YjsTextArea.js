@@ -102,6 +102,7 @@ export const YjsTextarea = props => {
           (origin !== undoManager && origin != null) ||
           input$.value !== yText.toString()
         ) {
+          console.log("This value is ", input$.value)
           input$.value = yText.toString()
           const cursor = awareness.getLocalState()?.cursor
           const newRange = [

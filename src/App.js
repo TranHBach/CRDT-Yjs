@@ -4,7 +4,7 @@ import { WebrtcProvider } from "y-webrtc"
 import * as Y from "yjs"
 import { YjsTextarea } from "./YjsTextArea"
 
-const room = "pengx17-test-textarea"
+const room = "pengx17-test-textarea3" 
 
 const usercolors = [
   "#30bced",
@@ -22,10 +22,13 @@ function App() {
   const [yText, setYText] = useState()
   const [awareness, setAwareness] = useState()
 
+  
+  // ws://localhost:4444
   useEffect(() => {
     const yDoc = new Y.Doc()
     const persistence = new IndexeddbPersistence(room, yDoc)
-    const wrtcProvider = new WebrtcProvider(room, yDoc)
+    const wrtcProvider = new WebrtcProvider(room, yDoc, {signaling: ["wss://signal-server-yjs.glitch.me"]})
+    console.log(wrtcProvider)
 
     wrtcProvider.awareness.setLocalStateField("user", {
       color: myColor
