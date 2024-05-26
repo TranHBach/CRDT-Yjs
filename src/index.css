@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 * {
   box-sizing: border-box;
 }
@@ -11,7 +15,8 @@ body {
 .text-container {
   position: relative;
   width: calc(100% - 16px);
-  height: calc(100vh - 32px);
+  flex-grow: 1;
+  border: 1px solid black;
 }
 
 .input {
@@ -30,6 +35,9 @@ body {
   background: transparent;
   overflow-wrap: break-word;
   margin: 0;
+}
+.input:focus {
+  outline: none;
 }
 
 .overlay {
