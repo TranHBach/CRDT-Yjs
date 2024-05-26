@@ -15,11 +15,13 @@ function Landing() {
   const handleCreateRoom = () => {
     const tempRoom = uuidv4();
     setRoom(tempRoom);
+    localStorage.setItem("room", tempRoom);
     navigate("/text");
   };
   const handleJoinRoom = (e) => {
     e.preventDefault();
     setRoom(text);
+    localStorage.setItem("room", text);
     navigate("/text");
   };
 

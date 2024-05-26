@@ -4,7 +4,7 @@ import { createContext, useState } from "react";
 export const RoomContext = createContext(null);
 
 function ContextProvider({ children }) {
-  const [room, setRoom] = useState("");
+  const [room, setRoom] = useState(localStorage.getItem("room") || "");
   return (
     <RoomContext.Provider
       value={{
