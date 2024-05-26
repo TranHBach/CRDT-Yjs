@@ -50,7 +50,7 @@ function TextPage() {
       setYText(undefined);
       setAwareness(undefined);
     };
-  }, []);
+  }, [room]);
 
   return (
     <div className="flex flex-col items-center justify-center h-screen">
