@@ -53,8 +53,8 @@ function TextPage() {
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
-      <div className="mb-[10px]">Room ID: {room}</div>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-700">
+      <div className="mb-[10px] text-white">Room ID: {room}</div>
       <YjsTextarea yText={yText} awareness={awareness} />
     </div>
   );
