@@ -31,7 +31,6 @@ function TextPage() {
       signaling: ["wss://signal-server-yjs.glitch.me"],
       password: password,
     });
-    console.log("wrtc", wrtcProvider);
 
     wrtcProvider.awareness.setLocalStateField("user", {
       color: myColor,
@@ -51,7 +50,7 @@ function TextPage() {
       setYText(undefined);
       setAwareness(undefined);
     };
-  }, [room]);
+  }, [room, password]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-700">
