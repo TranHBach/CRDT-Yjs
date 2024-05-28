@@ -3,7 +3,7 @@ import * as Y from "yjs";
 import { IndexeddbPersistence } from "y-indexeddb";
 import { WebrtcProvider } from "y-webrtc";
 import { YjsTextarea } from "../YjsTextArea";
-import { RoomContext } from "../Context/ContextProvider";
+import { PasswordContext, RoomContext } from "../Context/ContextProvider";
 
 const usercolors = [
   "#30bced",
@@ -19,7 +19,7 @@ const myColor = usercolors[Math.floor(Math.random() * usercolors.length)];
 
 function TextPage() {
   const { room } = useContext(RoomContext);
-  console.log(room);
+  const { password } = useContext(PasswordContext);
   const [yText, setYText] = useState();
   const [awareness, setAwareness] = useState();
 
@@ -29,8 +29,9 @@ function TextPage() {
     const persistence = new IndexeddbPersistence(room, yDoc);
     const wrtcProvider = new WebrtcProvider(room, yDoc, {
       signaling: ["wss://signal-server-yjs.glitch.me"],
+      password: password,
     });
-    console.log(wrtcProvider);
+    console.log("wrtc", wrtcProvider);
 
     wrtcProvider.awareness.setLocalStateField("user", {
       color: myColor,
