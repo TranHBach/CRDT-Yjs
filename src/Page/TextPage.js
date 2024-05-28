@@ -1,7 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import * as Y from "yjs";
 import { IndexeddbPersistence } from "y-indexeddb";
-import { WebrtcProvider } from "y-webrtc";
 import { YjsTextarea } from "../YjsTextArea";
 import { RoomContext } from "../Context/ContextProvider";
 
@@ -30,12 +29,9 @@ function TextPage() {
     const wrtcProvider = new WebrtcProvider(room, yDoc, {
       signaling: ["wss://signal-server-yjs.glitch.me"],
     });
-    console.log(wrtcProvider);
-
     wrtcProvider.awareness.setLocalStateField("user", {
       color: myColor,
     });
-
     persistence.once("synced", () => {
       console.log("synced");
       const yText = yDoc.getText("text");
