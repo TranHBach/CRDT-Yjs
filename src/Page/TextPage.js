@@ -1,8 +1,9 @@
 import React, { useContext, useEffect, useState } from "react";
 import * as Y from "yjs";
 import { IndexeddbPersistence } from "y-indexeddb";
+import { WebrtcProvider } from "y-webrtc";
 import { YjsTextarea } from "../YjsTextArea";
-import { RoomContext } from "../Context/ContextProvider";
+import { PasswordContext, RoomContext } from "../Context/ContextProvider";
 
 const usercolors = [
   "#30bced",
@@ -18,7 +19,7 @@ const myColor = usercolors[Math.floor(Math.random() * usercolors.length)];
 
 function TextPage() {
   const { room } = useContext(RoomContext);
-  console.log(room);
+  const { password } = useContext(PasswordContext);
   const [yText, setYText] = useState();
   const [awareness, setAwareness] = useState();
 
@@ -28,10 +29,14 @@ function TextPage() {
     const persistence = new IndexeddbPersistence(room, yDoc);
     const wrtcProvider = new WebrtcProvider(room, yDoc, {
       signaling: ["wss://signal-server-yjs.glitch.me"],
+      password: password,
     });
+    
     wrtcProvider.awareness.setLocalStateField("user", {
       color: myColor,
+      clientName: "Tran Huu Bach"
     });
+
     persistence.once("synced", () => {
       console.log("synced");
       const yText = yDoc.getText("text");
@@ -46,11 +51,11 @@ function TextPage() {
       setYText(undefined);
       setAwareness(undefined);
     };
-  }, [room]);
+  }, [room, password]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
-      <div className="mb-[10px]">Room ID: {room}</div>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-700">
+      <div className="mb-[10px] text-white">Room ID: {room}</div>
       <YjsTextarea yText={yText} awareness={awareness} />
     </div>
   );
