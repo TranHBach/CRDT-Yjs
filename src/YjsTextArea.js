@@ -201,7 +201,7 @@ export const YjsTextarea = (props) => {
   }, []);
 
   return (
-    <div className="text-container bg-white">
+    <div className="text-container">
       <Textarea
         className="input"
         ref={ref}
