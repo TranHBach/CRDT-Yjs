@@ -31,9 +31,10 @@ function TextPage() {
       signaling: ["wss://signal-server-yjs.glitch.me"],
       password: password,
     });
-
+    
     wrtcProvider.awareness.setLocalStateField("user", {
       color: myColor,
+      clientName: "Tran Huu Bach"
     });
 
     persistence.once("synced", () => {

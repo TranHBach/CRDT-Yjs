@@ -153,7 +153,7 @@ export const YjsTextarea = (props) => {
           >
             {idx === rects.length - 1 && (
               <div className="user-cursor">
-                <div className="user-cursor-label">{userInfo.id}</div>
+                <div className="user-cursor-label">{userInfo.clientName}</div>
               </div>
             )}
             <div className="user-cursor-selection" />
