@@ -26,15 +26,14 @@ function TextPage() {
   // ws://localhost:4444
   useEffect(() => {
     const yDoc = new Y.Doc();
-    const persistence = new IndexeddbPersistence(room, yDoc);
+    const persistence = new IndexeddbPersistence(room + "-" + password, yDoc);
     const wrtcProvider = new WebrtcProvider(room, yDoc, {
       signaling: ["wss://signal-server-yjs.glitch.me"],
       password: password,
     });
-    
+
     wrtcProvider.awareness.setLocalStateField("user", {
       color: myColor,
-      clientName: "Tran Huu Bach"
     });
 
     persistence.once("synced", () => {
