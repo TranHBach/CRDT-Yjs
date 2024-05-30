@@ -17,6 +17,9 @@ body {
   width: calc(100% - 16px);
   flex-grow: 1;
   border: 1px solid black;
+  background-color: white;
+  display: flex;
+  flex-direction: column;
 }
 
 .input {
@@ -35,6 +38,7 @@ body {
   background: transparent;
   overflow-wrap: break-word;
   margin: 0;
+  flex-grow: 1;
 }
 .input:focus {
   outline: none;
