@@ -2,6 +2,9 @@ import React from "react";
 import * as Y from "yjs";
 import { Textarea } from "./TextArea";
 
+const UPDATE_INTERVAL_TIME = 1000;
+
+let updateInterval = setInterval(() => {}, 1000);
 const useAwarenessUserInfos = (awareness) => {
   const [userInfos, setUserInfos] = React.useState([]);
 
@@ -48,12 +51,27 @@ const toAbsolute = (yPosRel, yDoc) => {
 };
 
 export const YjsTextarea = (props) => {
-  const { yText, awareness } = props;
+  const { yText, awareness, db } = props;
+  const [time, setTime] = React.useState(new Date());
   const userInfos = useAwarenessUserInfos(awareness);
   const ref = React.useRef(null);
   const helperRef = React.useRef(null);
   const cursorsRef = React.useRef(null);
 
+  const handleTimeChange = (e) => {
+    setTime(e.target.value);
+  };
+  const handleRevert = React.useCallback(
+    async (e) => {
+      e.preventDefault();
+      const value = await db.get("version", time);
+      const input$ = ref.current;
+      const textAreaLength = input$.value.length;
+      yText.delete(0, textAreaLength);
+      yText.insert(0, value);
+    },
+    [db, time, yText]
+  );
   const undoManager = React.useMemo(() => {
     if (yText) {
       return new Y.UndoManager(yText, {
@@ -61,6 +79,15 @@ export const YjsTextarea = (props) => {
       });
     }
   }, [yText]);
+
+  const uploadToIndexeddb = React.useCallback(async () => {
+    const tx = db.transaction("version", "readwrite");
+    await Promise.all([
+      tx.store.add(yText.toString(), new Date().toLocaleString()),
+      tx.done,
+    ]);
+    clearInterval(updateInterval);
+  }, [db, yText]);
 
   const resetLocalAwarenessCursors = React.useCallback(() => {
     if (ref.current && awareness && yText) {
@@ -76,6 +103,8 @@ export const YjsTextarea = (props) => {
   // handle local update: apply deltas to yText
   const handleLocalTextChange = React.useCallback(
     (delta) => {
+      clearInterval(updateInterval);
+      updateInterval = setInterval(uploadToIndexeddb, UPDATE_INTERVAL_TIME);
       const input$ = ref.current;
       if (yText && undoManager && input$) {
         if (delta === "undo") {
@@ -89,7 +118,7 @@ export const YjsTextarea = (props) => {
       }
       resetLocalAwarenessCursors();
     },
-    [undoManager, yText, resetLocalAwarenessCursors]
+    [undoManager, yText, resetLocalAwarenessCursors, uploadToIndexeddb]
   );
 
   // handle remote update: pull text from yDoc and set to native elements
@@ -102,7 +131,8 @@ export const YjsTextarea = (props) => {
           (origin !== undoManager && origin != null) ||
           input$.value !== yText.toString()
         ) {
-          console.log("This value is ", input$.value);
+          clearInterval(updateInterval);
+          updateInterval = setInterval(uploadToIndexeddb, UPDATE_INTERVAL_TIME);
           input$.value = yText.toString();
           const cursor = awareness.getLocalState()?.cursor;
           const newRange = [
@@ -121,7 +151,13 @@ export const YjsTextarea = (props) => {
         yDoc.off("update", syncFromYDoc);
       };
     }
-  }, [yText, undoManager, resetLocalAwarenessCursors, awareness]);
+  }, [
+    yText,
+    undoManager,
+    resetLocalAwarenessCursors,
+    awareness,
+    uploadToIndexeddb,
+  ]);
 
   // render a user indicator
   const renderUserIndicator = React.useCallback(
@@ -202,6 +238,8 @@ export const YjsTextarea = (props) => {
 
   return (
     <div className="text-container">
+      <input value={time} onChange={handleTimeChange} />
+      <button onClick={handleRevert}>Revert</button>
       <Textarea
         className="input"
         ref={ref}
