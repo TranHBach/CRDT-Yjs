@@ -2,18 +2,29 @@ import React from "react";
 import { createContext, useState } from "react";
 
 export const RoomContext = createContext(null);
+export const PasswordContext = createContext(null);
 
 function ContextProvider({ children }) {
   const [room, setRoom] = useState(localStorage.getItem("room") || "");
+  const [password, setPassword] = useState(
+    localStorage.getItem("password") || ""
+  );
   return (
-    <RoomContext.Provider
+    <PasswordContext.Provider
       value={{
-        room,
-        setRoom,
+        password,
+        setPassword,
       }}
     >
-      {children}
-    </RoomContext.Provider>
+      <RoomContext.Provider
+        value={{
+          room,
+          setRoom,
+        }}
+      >
+        {children}
+      </RoomContext.Provider>
+    </PasswordContext.Provider>
   );
 }
 

@@ -1,28 +1,37 @@
 import React, { useContext, useState } from "react";
 import "./Landing.css";
 import { v4 as uuidv4 } from "uuid";
-import { RoomContext } from "../Context/ContextProvider";
+import { PasswordContext, RoomContext } from "../Context/ContextProvider";
 import { useNavigate } from "react-router";
 
 function Landing() {
   const { setRoom } = useContext(RoomContext);
+  const { setPassword } = useContext(PasswordContext);
   const [text, setText] = useState("");
+  const [textPass, setPass] = useState("");
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
+  const handleRoomChange = (e) => {
     setText(e.target.value);
   };
   const handleCreateRoom = () => {
     const tempRoom = uuidv4();
     setRoom(tempRoom);
+    setPassword(textPass);
     localStorage.setItem("room", tempRoom);
+    localStorage.setItem("passsword", textPass);
     navigate("/text");
   };
   const handleJoinRoom = (e) => {
     e.preventDefault();
     setRoom(text);
+    setPassword(textPass);
     localStorage.setItem("room", text);
+    localStorage.setItem("password", textPass);
     navigate("/text");
+  };
+  const handlePasswordChange = (e) => {
+    setPass(e.target.value);
   };
 
   return (
@@ -52,7 +61,7 @@ function Landing() {
               <input
                 type="text"
                 value={text}
-                onChange={handleChange}
+                onChange={handleRoomChange}
                 className="flex-grow w-full focus:outline-none"
                 placeholder="Enter Room Code"
               />
@@ -67,6 +76,24 @@ function Landing() {
             >
               Join
             </button>
+            <div
+              className="flex justify-between items-center border h-[40px] w-[180px] cursor-pointer select-none
+          px-[10px] py-[5px] rounded-[10px]"
+            >
+              <img
+                src="./img/keyboard.png"
+                alt=""
+                className="h-3/4 mr-[10px]"
+              />
+
+              <input
+                type="text"
+                value={textPass}
+                onChange={handlePasswordChange}
+                className="flex-grow w-full focus:outline-none"
+                placeholder="Enter Room Password"
+              />
+            </div>
           </form>
         </div>
       </div>
