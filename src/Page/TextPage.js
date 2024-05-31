@@ -3,6 +3,7 @@ import * as Y from "yjs";
 import { IndexeddbPersistence } from "y-indexeddb";
 import { WebrtcProvider } from "y-webrtc";
 import { YjsTextarea } from "../YjsTextArea";
+import { Peer } from "peerjs";
 import { PasswordContext, RoomContext } from "../Context/ContextProvider";
 
 const usercolors = [
@@ -31,10 +32,10 @@ function TextPage() {
       signaling: ["wss://signal-server-yjs.glitch.me"],
       password: password,
     });
-    
+
     wrtcProvider.awareness.setLocalStateField("user", {
       color: myColor,
-      clientName: "Tran Huu Bach"
+      clientName: "Tran Huu Bach",
     });
 
     persistence.once("synced", () => {
