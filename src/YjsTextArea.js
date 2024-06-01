@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import * as Y from "yjs";
 import { Textarea } from "./TextArea";
 
@@ -51,27 +51,12 @@ const toAbsolute = (yPosRel, yDoc) => {
 };
 
 export const YjsTextarea = (props) => {
-  const { yText, awareness, db } = props;
-  const [time, setTime] = React.useState(new Date());
+  const { yText, awareness, db, setRef } = props;
   const userInfos = useAwarenessUserInfos(awareness);
   const ref = React.useRef(null);
   const helperRef = React.useRef(null);
   const cursorsRef = React.useRef(null);
 
-  const handleTimeChange = (e) => {
-    setTime(e.target.value);
-  };
-  const handleRevert = React.useCallback(
-    async (e) => {
-      e.preventDefault();
-      const value = await db.get("version", time);
-      const input$ = ref.current;
-      const textAreaLength = input$.value.length;
-      yText.delete(0, textAreaLength);
-      yText.insert(0, value);
-    },
-    [db, time, yText]
-  );
   const undoManager = React.useMemo(() => {
     if (yText) {
       return new Y.UndoManager(yText, {
@@ -83,9 +68,10 @@ export const YjsTextarea = (props) => {
   const uploadToIndexeddb = React.useCallback(async () => {
     const tx = db.transaction("version", "readwrite");
     await Promise.all([
-      tx.store.add(yText.toString(), new Date().toLocaleString()),
+      tx.store.put(yText.toString(), new Date().toLocaleString()),
       tx.done,
     ]);
+    window.dispatchEvent(new CustomEvent("versionStoreUpdated"));
     clearInterval(updateInterval);
   }, [db, yText]);
 
@@ -235,11 +221,14 @@ export const YjsTextarea = (props) => {
       };
     }
   }, []);
+  useEffect(() => {
+    setRef(ref);
+  }, [ref, setRef]);
 
   return (
     <div className="text-container">
-      <input value={time} onChange={handleTimeChange} />
-      <button onClick={handleRevert}>Revert</button>
+      {/*<input value={time} onChange={handleTimeChange} />
+      <button onClick={handleRevert}>Revert</button>*/}
       <Textarea
         className="input"
         ref={ref}
