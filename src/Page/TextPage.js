@@ -83,6 +83,7 @@ function TextPage() {
     persistence.once("synced", () => {
       console.log("synced");
       const yText = yDoc.getText("text");
+      yText.insert(0, "a");
       setYText(yText);
       setAwareness(provider.awareness);
       setWrtcProvider(provider);
