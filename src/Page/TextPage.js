@@ -19,7 +19,8 @@ function capitalizeFirstLetter(string) {
 }
 
 function TextPage() {
-  const { room } = useContext(RoomContext);
+  //const { room } = useContext(RoomContext);
+  const room = 1;
   const { password } = useContext(PasswordContext);
   const [yText, setYText] = useState();
   const [awareness, setAwareness] = useState();
