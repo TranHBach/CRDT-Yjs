@@ -106,6 +106,7 @@ function bindingTextarea(textarea, opts) {
   }
 }
 
+
 // A custom Textarea component that implements Quill delta operations
 export const Textarea = React.forwardRef((props, ref) => {
   const { onTextChange, onSelectionChange, ...rest } = props
