@@ -4,57 +4,94 @@ import { IndexeddbPersistence } from "y-indexeddb";
 import { WebrtcProvider } from "y-webrtc";
 import { YjsTextarea } from "../YjsTextArea";
 import { PasswordContext, RoomContext } from "../Context/ContextProvider";
+import { ADJECTIVES, ANIMALS } from "../Name/cursorNames";
+import cssColors from "../Name/cssColors";
 
-const usercolors = [
-  "#30bced",
-  "#6eeb83",
-  "#ffbc42",
-  "#ecd444",
-  "#ee6352",
-  "#9ac2c9",
-  "#8acb88",
-  "#1be7ff",
-];
-const myColor = usercolors[Math.floor(Math.random() * usercolors.length)];
+const myColor = getRandomElement(cssColors);
+
+function getRandomElement(array) {
+  return array[Math.floor(Math.random() * array.length)];
+}
+function capitalizeFirstLetter(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+}
 
 function TextPage() {
   const { room } = useContext(RoomContext);
   const { password } = useContext(PasswordContext);
   const [yText, setYText] = useState();
   const [awareness, setAwareness] = useState();
+  const [wrtcProvider, setWrtcProvider] = useState();
+  const [name, setName] = useState();
 
   // ws://localhost:4444
   useEffect(() => {
     const yDoc = new Y.Doc();
     const persistence = new IndexeddbPersistence(room + "-" + password, yDoc);
-    const wrtcProvider = new WebrtcProvider(room, yDoc, {
+    const provider = new WebrtcProvider(room, yDoc, {
       signaling: ["wss://signal-server-yjs.glitch.me"],
       password: password,
     });
 
-    wrtcProvider.awareness.setLocalStateField("user", {
+    const initialName = `${capitalizeFirstLetter(
+      getRandomElement(ADJECTIVES)
+    )} ${getRandomElement(ANIMALS)}`;
+
+    provider.awareness.setLocalStateField("user", {
       color: myColor,
+      clientName: initialName,
     });
 
     persistence.once("synced", () => {
       console.log("synced");
       const yText = yDoc.getText("text");
       setYText(yText);
-      setAwareness(wrtcProvider.awareness);
+      setAwareness(provider.awareness);
+      setWrtcProvider(provider);
     });
 
     return () => {
       yDoc.destroy();
       persistence.destroy();
-      wrtcProvider.destroy();
+      provider.destroy();
       setYText(undefined);
       setAwareness(undefined);
+      setWrtcProvider(undefined);
     };
   }, [room, password]);
 
+  const handleChangeName = (name) => {
+    if (wrtcProvider && name) {
+      wrtcProvider.awareness.setLocalStateField("user", {
+        color: myColor,
+        clientName: name,
+      });
+    }
+  };
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-700">
-      <div className="mb-[10px] text-white">Room ID: {room}</div>
+      <div className="flex w-full items-center px-[10px]">
+        <div className="flex items-center">
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Enter your name"
+            className="focus:outline-none rounded-md mr-[10px]"
+          />
+          <div
+            className="w-auto h-[30px] rounded-lg bg-[#322C2B] text-white flex items-center justify-center cursor-pointer"
+            onClick={() => handleChangeName(name)}
+          >
+            Change Name
+          </div>
+        </div>
+        <div className="flex-grow flex justify-center">
+          <div className="mb-[10px] text-white mr-[20px]">Room ID: {room}</div>
+          <div className="mb-[10px] text-white"> Password: {password}</div>
+        </div>
+      </div>
       <YjsTextarea yText={yText} awareness={awareness} />
     </div>
   );
