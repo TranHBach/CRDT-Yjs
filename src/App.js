@@ -5,13 +5,13 @@ import Landing from "./Page/Landing";
 import ContextProvider from "./Context/ContextProvider";
 
 const router = createBrowserRouter([
-  {
+  /*{
     path: "/",
     element: <Landing />,
     errorElement: <h1>404 Not Found</h1>,
-  },
+  },*/
   {
-    path: "/text",
+    path: "/",
     element: <TextPage />,
   },
 ]);
