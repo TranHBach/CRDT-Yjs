@@ -92,8 +92,6 @@ function TextPage() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-700">
-      <div className="mb-[10px] text-white">Room ID: {room}</div>
-      <YjsTextarea yText={yText} awareness={awareness} db={db.current} />
       <div className="flex w-full items-center px-[10px]">
         <div className="flex items-center">
           <input
@@ -115,7 +113,7 @@ function TextPage() {
           <div className="mb-[10px] text-white"> Password: {password}</div>
         </div>
       </div>
-      <YjsTextarea yText={yText} awareness={awareness} />
+      <YjsTextarea yText={yText} awareness={awareness} db={db.current} />
     </div>
   );
 }
