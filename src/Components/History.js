@@ -23,7 +23,7 @@ function History(props) {
       <textarea
         value={text}
         readOnly
-        className="w-full h-[150px] text-[12px] cursor-pointer"
+        className="w-full h-[150px] text-[12px] cursor-pointer resize-none rounded-md"
         onClick={() => {
           handleClick(text, time);
         }}
