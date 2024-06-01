@@ -6,9 +6,9 @@ import { YjsTextarea } from "../YjsTextArea";
 import { PasswordContext, RoomContext } from "../Context/ContextProvider";
 import { openDB } from "idb";
 import { ADJECTIVES, ANIMALS } from "../Name/cursorNames";
-import cssColors from "../Name/cssColors";
+import { COLOR } from "../Name/cssColors";
 
-const myColor = getRandomElement(cssColors);
+const myColor = getRandomElement(COLOR);
 
 function getRandomElement(array) {
   return array[Math.floor(Math.random() * array.length)];
