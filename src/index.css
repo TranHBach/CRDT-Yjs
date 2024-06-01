@@ -17,6 +17,7 @@ body {
   width: calc(100% - 16px);
   flex-grow: 1;
   border: 1px solid black;
+  border-radius: 10px 10px 0px 0px;
   background-color: white;
   display: flex;
   flex-direction: column;
