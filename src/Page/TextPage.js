@@ -46,6 +46,7 @@ function TextPage() {
     const provider = new WebrtcProvider(room, yDoc, {
       signaling: ["wss://signal-server-yjs.glitch.me"],
       password: password,
+      maxConns: 100,
     });
     const initDB = async () => {
       db.current = await openDB(`${roomName}-version`, 1, {
