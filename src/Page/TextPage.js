@@ -4,7 +4,7 @@ import { IndexeddbPersistence } from "y-indexeddb";
 import { WebrtcProvider } from "y-webrtc";
 import { YjsTextarea } from "../YjsTextArea";
 import History from "../Components/History";
-import { PasswordContext, RoomContext } from "../Context/ContextProvider";
+import { PasswordContext } from "../Context/ContextProvider";
 import { openDB } from "idb";
 import { ADJECTIVES, ANIMALS } from "../Name/cursorNames";
 import { COLOR } from "../Name/cssColors";
@@ -19,8 +19,8 @@ function capitalizeFirstLetter(string) {
 }
 
 function TextPage() {
-  const { room } = useContext(RoomContext);
-  //const room = 1;
+  //const { room } = useContext(RoomContext);
+  const room = 1;
   const { password } = useContext(PasswordContext);
   const [yText, setYText] = useState();
   const [awareness, setAwareness] = useState();
@@ -84,6 +84,7 @@ function TextPage() {
     persistence.once("synced", () => {
       console.log("synced");
       const yText = yDoc.getText("text");
+      yText.insert(0, "a");
       setYText(yText);
       setAwareness(provider.awareness);
       setWrtcProvider(provider);
