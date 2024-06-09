@@ -120,3 +120,12 @@ body {
   position: relative;
   height: 99999px;
 }
+
+del {
+  background-color: #ff5252;
+}
+
+ins {
+  background-color: #70C247;
+  text-decoration: none;
+}

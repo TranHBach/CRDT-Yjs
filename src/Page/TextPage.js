@@ -8,6 +8,8 @@ import { PasswordContext } from "../Context/ContextProvider";
 import { openDB } from "idb";
 import { ADJECTIVES, ANIMALS } from "../Name/cursorNames";
 import { COLOR } from "../Name/cssColors";
+import { diffString } from "../util/CompareDiff";
+import DOMPurify from "dompurify";
 
 const myColor = getRandomElement(COLOR);
 
@@ -20,7 +22,7 @@ function capitalizeFirstLetter(string) {
 
 function TextPage() {
   //const { room } = useContext(RoomContext);
-  const room = 1;
+  const room = "1";
   const { password } = useContext(PasswordContext);
   const [yText, setYText] = useState();
   const [awareness, setAwareness] = useState();
@@ -46,7 +48,7 @@ function TextPage() {
     const provider = new WebrtcProvider(room, yDoc, {
       signaling: ["wss://signal-server-yjs.glitch.me"],
       password: password,
-      maxConns: 100,
+      maxConns: 65 + Math.floor(Math.random() * 70),
     });
     const initDB = async () => {
       db.current = await openDB(`${roomName}-version`, 1, {
@@ -79,12 +81,12 @@ function TextPage() {
     provider.awareness.setLocalStateField("user", {
       color: myColor,
       clientName: initialName,
+      edited: false,
     });
 
     persistence.once("synced", () => {
       console.log("synced");
       const yText = yDoc.getText("text");
-      yText.insert(0, "a");
       setYText(yText);
       setAwareness(provider.awareness);
       setWrtcProvider(provider);
@@ -104,6 +106,7 @@ function TextPage() {
   const handleChangeName = (name) => {
     if (wrtcProvider && name) {
       wrtcProvider.awareness.setLocalStateField("user", {
+        ...wrtcProvider.awareness.getLocalState().user,
         color: myColor,
         clientName: name,
       });
@@ -121,12 +124,13 @@ function TextPage() {
     const input$ = ref.current;
     const textAreaLength = input$.value.length;
     yText.delete(0, textAreaLength);
-    yText.insert(0, historyText);
+    yText.insert(0, historyText.renderedText);
     setHistoryText(undefined);
     //setHistoryTime(undefined);
   };
-  const handleClickHistory = (text, time) => {
-    setHistoryText(text);
+  const handleClickHistory = (text, oldText) => {
+    console.log(oldText, text);
+    setHistoryText({ renderedText: text, diff: diffString(oldText, text) });
     //setHistoryTime(time);
     handleSideBarClose();
   };
@@ -181,7 +185,9 @@ function TextPage() {
           <History
             key={index}
             time={version.key}
-            text={version.value}
+            text={version.value.newText}
+            editor={version.value.editor}
+            oldText={version.value.originText}
             handleClick={handleClickHistory}
           />
         ))}
@@ -197,10 +203,11 @@ function TextPage() {
         </div>
         {historyText ? (
           <div className="w-1/2 flex">
-            <textarea
-              className="flex-grow px-[12px] py-[16px] text-[24px] mr-[8px] border border-black resize-none"
-              value={historyText}
-              readOnly
+            <div
+              className="flex-grow px-[12px] py-[16px] text-[24px] mr-[8px] border border-black resize-none bg-white rounded-md"
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(historyText.diff),
+              }}
             />
             <div className="flex flex-col items-center justify-center gap-y-[15px]">
               <div

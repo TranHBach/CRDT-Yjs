@@ -1,13 +1,12 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import * as Y from "yjs";
 import { Textarea } from "./TextArea";
 
 const UPDATE_INTERVAL_TIME = 1000;
-
 let updateInterval = setInterval(() => {}, 1000);
-const useAwarenessUserInfos = (awareness) => {
-  const [userInfos, setUserInfos] = React.useState([]);
 
+const useAwarenessUserInfos = (awareness, editor) => {
+  const [userInfos, setUserInfos] = React.useState([]);
   React.useEffect(() => {
     if (!awareness) {
       return;
@@ -15,6 +14,9 @@ const useAwarenessUserInfos = (awareness) => {
     const listener = () => {
       setUserInfos(
         [...awareness.getStates()].map(([id, info]) => {
+          if (info.user.edited) {
+            editor.current.add(info.user.clientName);
+          }
           return {
             ...info.user,
             cursor: info.cursor,
@@ -29,9 +31,9 @@ const useAwarenessUserInfos = (awareness) => {
     return () => {
       awareness.off("change", listener);
     };
-  }, [awareness]);
+  }, [awareness, editor]);
 
-  return userInfos;
+  return { userInfo: userInfos, editor: editor.current };
 };
 
 const toRelative = (yPosAbs, yText) => {
@@ -52,10 +54,12 @@ const toAbsolute = (yPosRel, yDoc) => {
 
 export const YjsTextarea = (props) => {
   const { yText, awareness, db, setRef } = props;
-  const userInfos = useAwarenessUserInfos(awareness);
+  const editor = React.useRef(new Set());
+  const userInfos = useAwarenessUserInfos(awareness, editor);
   const ref = React.useRef(null);
   const helperRef = React.useRef(null);
   const cursorsRef = React.useRef(null);
+  const [originalText, setOriginalText] = useState("");
 
   const undoManager = React.useMemo(() => {
     if (yText) {
@@ -67,13 +71,27 @@ export const YjsTextarea = (props) => {
 
   const uploadToIndexeddb = React.useCallback(async () => {
     const tx = db.transaction("version", "readwrite");
+    const textareaString = yText.toString();
     await Promise.all([
-      tx.store.put(yText.toString(), new Date().toLocaleString()),
+      tx.store.put(
+        {
+          editor: editor.current,
+          originText: originalText,
+          newText: textareaString,
+        },
+        new Date().toLocaleString()
+      ),
       tx.done,
     ]);
+    editor.current = new Set();
+    awareness.setLocalStateField("user", {
+      ...awareness.getLocalState().user,
+      edited: false,
+    });
     window.dispatchEvent(new CustomEvent("versionStoreUpdated"));
+    setOriginalText(textareaString);
     clearInterval(updateInterval);
-  }, [db, yText]);
+  }, [db, yText, originalText, awareness]);
 
   const resetLocalAwarenessCursors = React.useCallback(() => {
     if (ref.current && awareness && yText) {
@@ -89,8 +107,6 @@ export const YjsTextarea = (props) => {
   // handle local update: apply deltas to yText
   const handleLocalTextChange = React.useCallback(
     (delta) => {
-      clearInterval(updateInterval);
-      updateInterval = setInterval(uploadToIndexeddb, UPDATE_INTERVAL_TIME);
       const input$ = ref.current;
       if (yText && undoManager && input$) {
         if (delta === "undo") {
@@ -101,10 +117,27 @@ export const YjsTextarea = (props) => {
           yText.applyDelta(delta);
         }
         input$.value = yText.toString();
+        clearInterval(updateInterval);
+        const newText = input$.value;
+        updateInterval = setInterval(() => {
+          uploadToIndexeddb(originalText, newText);
+        }, UPDATE_INTERVAL_TIME);
+        awareness.setLocalStateField("user", {
+          ...awareness.getLocalState().user,
+          edited: true,
+        });
+  
       }
       resetLocalAwarenessCursors();
     },
-    [undoManager, yText, resetLocalAwarenessCursors, uploadToIndexeddb]
+    [
+      undoManager,
+      yText,
+      originalText,
+      awareness,
+      resetLocalAwarenessCursors,
+      uploadToIndexeddb,
+    ]
   );
 
   // handle remote update: pull text from yDoc and set to native elements
@@ -241,7 +274,7 @@ export const YjsTextarea = (props) => {
       </div>
       <div className="overlay cursors-container" ref={cursorsRef}>
         <div className="cursors-wrapper">
-          {userInfos.flatMap(renderUserIndicator)}
+          {userInfos.userInfo.flatMap(renderUserIndicator)}
         </div>
       </div>
     </div>
