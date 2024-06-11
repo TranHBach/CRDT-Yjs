@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import * as Y from "yjs";
 import { Textarea } from "./TextArea";
 
@@ -6,12 +6,12 @@ const UPDATE_INTERVAL_TIME = 1000;
 let updateInterval = setInterval(() => {}, 1000);
 
 const useAwarenessUserInfos = (awareness, editor) => {
-  const [userInfos, setUserInfos] = React.useState([]);
-  React.useEffect(() => {
-    if (!awareness) {
-      return;
-    }
-    const listener = () => {
+  const [userInfos, setUserInfos] = useState([]);
+  
+  useEffect(() => {
+    if (!awareness) return;
+
+    const updateUserInfos = () => {
       setUserInfos(
         [...awareness.getStates()].map(([id, info]) => {
           if (info.user.edited) {
@@ -25,12 +25,14 @@ const useAwarenessUserInfos = (awareness, editor) => {
           };
         })
       );
-      console.log(awareness.getStates())
+      console.log(awareness.getStates());
     };
-    listener();
-    awareness.on("change", listener);
+
+    updateUserInfos();
+    awareness.on("change", updateUserInfos);
+
     return () => {
-      awareness.off("change", listener);
+      awareness.off("change", updateUserInfos);
     };
   }, [awareness, editor]);
 
@@ -38,39 +40,31 @@ const useAwarenessUserInfos = (awareness, editor) => {
 };
 
 const toRelative = (yPosAbs, yText) => {
-  const relPos =
-    yPosAbs != null && yText
-      ? Y.createRelativePositionFromTypeIndex(yText, yPosAbs)
-      : null;
-  return relPos ?? null;
+  return yPosAbs != null && yText
+    ? Y.createRelativePositionFromTypeIndex(yText, yPosAbs)
+    : null;
 };
 
 const toAbsolute = (yPosRel, yDoc) => {
-  const absPos =
-    yPosRel && yDoc
-      ? Y.createAbsolutePositionFromRelativePosition(yPosRel, yDoc)
-      : null;
-  return absPos?.index ?? -1;
+  return yPosRel && yDoc
+    ? Y.createAbsolutePositionFromRelativePosition(yPosRel, yDoc).index ?? -1
+    : -1;
 };
 
 export const YjsTextarea = (props) => {
   const { yText, awareness, db, setRef } = props;
-  const editor = React.useRef(new Set());
+  const editor = useRef(new Set());
   const userInfos = useAwarenessUserInfos(awareness, editor);
-  const ref = React.useRef(null);
-  const helperRef = React.useRef(null);
-  const cursorsRef = React.useRef(null);
+  const ref = useRef(null);
+  const helperRef = useRef(null);
+  const cursorsRef = useRef(null);
   const [originalText, setOriginalText] = useState("");
 
-  const undoManager = React.useMemo(() => {
-    if (yText) {
-      return new Y.UndoManager(yText, {
-        captureTimeout: 200,
-      });
-    }
+  const undoManager = useMemo(() => {
+    return yText ? new Y.UndoManager(yText, { captureTimeout: 200 }) : undefined;
   }, [yText]);
 
-  const uploadToIndexeddb = React.useCallback(async () => {
+  const uploadToIndexeddb = useCallback(async () => {
     if (editor.current && editor.current.size > 0) {
       const tx = db.transaction("version", "readwrite");
       const textareaString = yText.toString();
@@ -91,11 +85,8 @@ export const YjsTextarea = (props) => {
           ...awareness.getLocalState().user,
           edited: false,
         });
-      }
-      else {
-        awareness.setLocalStateField("user", {
-          edited: false
-        })
+      } else {
+        awareness.setLocalStateField("user", { edited: false });
       }
       window.dispatchEvent(new CustomEvent("versionStoreUpdated"));
       setOriginalText(textareaString);
@@ -103,7 +94,7 @@ export const YjsTextarea = (props) => {
     }
   }, [db, yText, originalText, awareness]);
 
-  const resetLocalAwarenessCursors = React.useCallback(() => {
+  const resetLocalAwarenessCursors = useCallback(() => {
     if (ref.current && awareness && yText) {
       const s = ref.current.selectionStart;
       const e = ref.current.selectionEnd;
@@ -114,8 +105,7 @@ export const YjsTextarea = (props) => {
     }
   }, [yText, awareness]);
 
-  // handle local update: apply deltas to yText
-  const handleLocalTextChange = React.useCallback(
+  const handleLocalTextChange = useCallback(
     (delta) => {
       const input$ = ref.current;
       if (yText && undoManager && input$) {
@@ -136,7 +126,6 @@ export const YjsTextarea = (props) => {
           ...awareness.getLocalState().user,
           edited: true,
         });
-  
       }
       resetLocalAwarenessCursors();
     },
@@ -150,8 +139,7 @@ export const YjsTextarea = (props) => {
     ]
   );
 
-  // handle remote update: pull text from yDoc and set to native elements
-  React.useEffect(() => {
+  useEffect(() => {
     if (yText && yText.doc && ref.current && awareness) {
       const yDoc = yText.doc;
       const input$ = ref.current;
@@ -180,16 +168,9 @@ export const YjsTextarea = (props) => {
         yDoc.off("update", syncFromYDoc);
       };
     }
-  }, [
-    yText,
-    undoManager,
-    resetLocalAwarenessCursors,
-    awareness,
-    uploadToIndexeddb,
-  ]);
+  }, [yText, undoManager, resetLocalAwarenessCursors, awareness, uploadToIndexeddb]);
 
-  // render a user indicator
-  const renderUserIndicator = React.useCallback(
+  const renderUserIndicator = useCallback(
     (userInfo) => {
       const yDoc = yText?.doc;
       const text = yText?.toString() ?? "";
@@ -208,8 +189,6 @@ export const YjsTextarea = (props) => {
             key={userInfo.id + "_" + idx}
             className="user-indicator"
             style={{
-              // @ts-ignore
-              "--user-color": userInfo.color,
               left: rect.left - overlayRect.left,
               top: rect.top - overlayRect.top,
               width: rect.width,
@@ -230,7 +209,6 @@ export const YjsTextarea = (props) => {
         if (!helperRef.current || start === -1 || end === -1) {
           return [];
         }
-        // have to place a new line to make sure cursors can be rendered
         helperRef.current.textContent = text + "\n";
         if (helperRef.current.firstChild == null) {
           return [];
@@ -246,39 +224,36 @@ export const YjsTextarea = (props) => {
     [yText]
   );
 
-  // sync scroll positions
-  React.useEffect(() => {
+  useEffect(() => {
     if (ref.current && cursorsRef.current && helperRef.current) {
       const input$ = ref.current;
       const cursors$ = cursorsRef.current;
       const helper$ = helperRef.current;
-      const onScroll = () => {
+      const handleScroll = () => {
         cursors$.scrollLeft = input$.scrollLeft;
         cursors$.scrollTop = input$.scrollTop;
         helper$.scrollLeft = input$.scrollLeft;
         helper$.scrollTop = input$.scrollTop;
       };
-      input$.addEventListener("scroll", onScroll, { passive: true });
+      input$.addEventListener("scroll", handleScroll, { passive: true });
       return () => {
-        input$.removeEventListener("scroll", onScroll);
+        input$.removeEventListener("scroll", handleScroll);
       };
     }
   }, []);
+  
   useEffect(() => {
     setRef(ref);
   }, [ref, setRef]);
 
   return (
     <div className="text-container">
-      {/*<input value={time} onChange={handleTimeChange} />
-      <button onClick={handleRevert}>Revert</button>*/}
       <Textarea
         className="input"
         ref={ref}
         onSelectionChange={resetLocalAwarenessCursors}
         onTextChange={handleLocalTextChange}
       />
-      {/*This is for Cursor of user display*/}
       <div className="input overlay selection-helper-container hidden">
         <div className="selection-helper" ref={helperRef} />
       </div>

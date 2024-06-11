@@ -16,7 +16,6 @@ import { ADJECTIVES, ANIMALS } from "../Name/cursorNames";
 import { COLOR } from "../Name/cssColors";
 import { diffString } from "../util/CompareDiff";
 import DOMPurify from "dompurify";
-import { RoomContext } from "../Context/ContextProvider";
 
 const myColor = getRandomElement(COLOR);
 
@@ -28,7 +27,6 @@ function capitalizeFirstLetter(string) {
 }
 
 function TextPage() {
-  // const { room } = useContext(RoomContext);
   const room = "bd41f337-1dfe-4f97-a478-c73428f4ab22";
   const { password } = useContext(PasswordContext);
   const [yText, setYText] = useState();
@@ -41,10 +39,10 @@ function TextPage() {
   const [ref, setRef] = useState();
   const [historyText, setHistoryText] = useState();
   const [isInternetAvailable, setInternetAvailable] = useState(true);
-  //const [historyTime, setHistoryTime] = useState();
+
   const checkInternetConnection = useCallback(() => {
-    const url = "https://www.google.com/favicon.ico"; 
-    const interval = 5000; 
+    const url = "https://www.google.com/favicon.ico";
+    const interval = 5000;
 
     const checkConnection = () => {
       fetch(url, { method: "HEAD", cache: "no-cache", mode: "no-cors" })
@@ -60,20 +58,18 @@ function TextPage() {
         });
     };
 
-    // Initial check
     checkConnection();
-
-    // Set interval for continuous checking
     setInterval(checkConnection, interval);
   }, [isInternetAvailable]);
 
   useEffect(() => {
     handleSideBarClose();
   }, []);
+
   useEffect(() => {
     checkInternetConnection();
-  })
-  // ws://localhost:4444
+  }, [checkInternetConnection]);
+
   useEffect(() => {
     const yDoc = new Y.Doc();
     const roomName = room + (password === "" ? "" : "-" + password);
@@ -85,18 +81,13 @@ function TextPage() {
         "wss://signal-server-yjs-2.glitch.me",
         "wss://signal-server-yjs-3.glitch.me",
       ],
-      // signaling: [
-      //   "ws://localhost:4444",
-      //   "ws://localhost:4445",
-      //   "ws://localhost:4446",
-      // ],
       password: password,
       maxConns: 65 + Math.floor(Math.random() * 70),
     });
+
     const initDB = async () => {
       db.current = await openDB(`${roomName}-version`, 1, {
         upgrade(db) {
-          console.log("This runs");
           if (!db.objectStoreNames.contains("version")) {
             db.createObjectStore("version", {
               autoIncrement: true,
@@ -113,6 +104,7 @@ function TextPage() {
       }
       setVersion(versions);
     };
+
     initDB();
 
     const handleVersionUpdate = async () => {
@@ -139,7 +131,6 @@ function TextPage() {
     });
 
     persistence.once("synced", () => {
-      console.log("synced");
       const yText = yDoc.getText("text");
       setYText(yText);
       setAwareness(provider.awareness);
@@ -180,18 +171,19 @@ function TextPage() {
     yText.delete(0, textAreaLength);
     yText.insert(0, historyText.renderedText);
     setHistoryText(undefined);
-    //setHistoryTime(undefined);
   };
   const handleClickHistory = (text, oldText) => {
-    console.log(oldText, text);
     setHistoryText({ renderedText: text, diff: diffString(oldText, text) });
-    //setHistoryTime(time);
     handleSideBarClose();
   };
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-gray-700">
-      {!isInternetAvailable? <div className="text-white">Trying to restore connection...</div>: ""}
+      {!isInternetAvailable ? (
+        <div className="text-white">Trying to restore connection...</div>
+      ) : (
+        ""
+      )}
       <div className="flex w-full items-center px-[10px]">
         <div className="flex items-center">
           <input
@@ -220,9 +212,7 @@ function TextPage() {
         </div>
       </div>
       <div
-        className="w-[300px] bg-[#322C2B] fixed top-0 right-0 h-full z-10 backdrop-blur-sm bg-opacity-90
-       shadow overflow-y-auto flex flex-col gap-y-[15px] sidebar
-      "
+        className="w-[300px] bg-[#322C2B] fixed top-0 right-0 h-full z-10 backdrop-blur-sm bg-opacity-90 shadow overflow-y-auto flex flex-col gap-y-[15px] sidebar"
       >
         <div className="relative">
           <img
@@ -279,7 +269,6 @@ function TextPage() {
                 className="w-[70px] h-[30px] rounded-md bg-white text-[#322C2B] flex items-center justify-center cursor-pointer"
                 onClick={() => {
                   setHistoryText(undefined);
-                  //setHistoryTime(undefined);
                 }}
               >
                 Cancel
