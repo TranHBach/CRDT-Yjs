@@ -1,4 +1,10 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import * as Y from "yjs";
 import { IndexeddbPersistence } from "y-indexeddb";
 import { WebrtcProvider } from "y-webrtc";
@@ -10,6 +16,7 @@ import { ADJECTIVES, ANIMALS } from "../Name/cursorNames";
 import { COLOR } from "../Name/cssColors";
 import { diffString } from "../util/CompareDiff";
 import DOMPurify from "dompurify";
+import { RoomContext } from "../Context/ContextProvider";
 
 const myColor = getRandomElement(COLOR);
 
@@ -21,8 +28,8 @@ function capitalizeFirstLetter(string) {
 }
 
 function TextPage() {
-  //const { room } = useContext(RoomContext);
-  const room = "1";
+  // const { room } = useContext(RoomContext);
+  const room = "bd41f337-1dfe-4f97-a478-c73428f4ab22";
   const { password } = useContext(PasswordContext);
   const [yText, setYText] = useState();
   const [awareness, setAwareness] = useState();
@@ -33,12 +40,39 @@ function TextPage() {
   const [version, setVersion] = useState([]);
   const [ref, setRef] = useState();
   const [historyText, setHistoryText] = useState();
+  const [isInternetAvailable, setInternetAvailable] = useState(true);
   //const [historyTime, setHistoryTime] = useState();
+  const checkInternetConnection = useCallback(() => {
+    const url = "https://www.google.com/favicon.ico"; 
+    const interval = 5000; 
+
+    const checkConnection = () => {
+      fetch(url, { method: "HEAD", cache: "no-cache", mode: "no-cors" })
+        .then((response) => {
+          if (response.ok && !isInternetAvailable) {
+            setInternetAvailable(false);
+          } else if (!response.ok && isInternetAvailable) {
+            setInternetAvailable(true);
+          }
+        })
+        .catch((error) => {
+          setInternetAvailable(false);
+        });
+    };
+
+    // Initial check
+    checkConnection();
+
+    // Set interval for continuous checking
+    setInterval(checkConnection, interval);
+  }, [isInternetAvailable]);
 
   useEffect(() => {
     handleSideBarClose();
   }, []);
-
+  useEffect(() => {
+    checkInternetConnection();
+  })
   // ws://localhost:4444
   useEffect(() => {
     const yDoc = new Y.Doc();
@@ -46,18 +80,38 @@ function TextPage() {
     roomValue.current = roomName + "-version";
     const persistence = new IndexeddbPersistence(roomName, yDoc);
     const provider = new WebrtcProvider(room, yDoc, {
-      signaling: ["wss://signal-server-yjs.glitch.me"],
+      signaling: [
+        "wss://signal-server-yjs.glitch.me",
+        "wss://signal-server-yjs-2.glitch.me",
+        "wss://signal-server-yjs-3.glitch.me",
+      ],
+      // signaling: [
+      //   "ws://localhost:4444",
+      //   "ws://localhost:4445",
+      //   "ws://localhost:4446",
+      // ],
       password: password,
       maxConns: 65 + Math.floor(Math.random() * 70),
     });
     const initDB = async () => {
       db.current = await openDB(`${roomName}-version`, 1, {
         upgrade(db) {
-          db.createObjectStore("version", {
-            autoIncrement: true,
-          });
+          console.log("This runs");
+          if (!db.objectStoreNames.contains("version")) {
+            db.createObjectStore("version", {
+              autoIncrement: true,
+            });
+          }
         },
       });
+      const tx = await db.current.transaction("version", "readonly");
+      let cursor = await tx.store.openCursor();
+      const versions = [];
+      while (cursor) {
+        versions.push({ key: cursor.key, value: cursor.value });
+        cursor = await cursor.continue();
+      }
+      setVersion(versions);
     };
     initDB();
 
@@ -137,6 +191,7 @@ function TextPage() {
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-gray-700">
+      {!isInternetAvailable? <div className="text-white">Trying to restore connection...</div>: ""}
       <div className="flex w-full items-center px-[10px]">
         <div className="flex items-center">
           <input
@@ -181,16 +236,20 @@ function TextPage() {
           </p>
         </div>
 
-        {version.map((version, index) => (
-          <History
-            key={index}
-            time={version.key}
-            text={version.value.newText}
-            editor={version.value.editor}
-            oldText={version.value.originText}
-            handleClick={handleClickHistory}
-          />
-        ))}
+        {version.map((version, index) =>
+          version.value.editor && version.value.editor.size > 0 ? (
+            <History
+              key={index}
+              time={version.key}
+              text={version.value.newText}
+              editor={version.value.editor}
+              oldText={version.value.originText}
+              handleClick={handleClickHistory}
+            />
+          ) : (
+            ""
+          )
+        )}
       </div>
       <div className="w-full flex-grow flex">
         <div className="h-full flex-grow flex flex-col justify-center items-center">

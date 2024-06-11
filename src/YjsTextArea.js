@@ -25,6 +25,7 @@ const useAwarenessUserInfos = (awareness, editor) => {
           };
         })
       );
+      console.log(awareness.getStates())
     };
     listener();
     awareness.on("change", listener);
@@ -70,27 +71,36 @@ export const YjsTextarea = (props) => {
   }, [yText]);
 
   const uploadToIndexeddb = React.useCallback(async () => {
-    const tx = db.transaction("version", "readwrite");
-    const textareaString = yText.toString();
-    await Promise.all([
-      tx.store.put(
-        {
-          editor: editor.current,
-          originText: originalText,
-          newText: textareaString,
-        },
-        new Date().toLocaleString()
-      ),
-      tx.done,
-    ]);
-    editor.current = new Set();
-    awareness.setLocalStateField("user", {
-      ...awareness.getLocalState().user,
-      edited: false,
-    });
-    window.dispatchEvent(new CustomEvent("versionStoreUpdated"));
-    setOriginalText(textareaString);
-    clearInterval(updateInterval);
+    if (editor.current && editor.current.size > 0) {
+      const tx = db.transaction("version", "readwrite");
+      const textareaString = yText.toString();
+      await Promise.all([
+        tx.store.put(
+          {
+            editor: editor.current,
+            originText: originalText,
+            newText: textareaString,
+          },
+          new Date().toLocaleString()
+        ),
+        tx.done,
+      ]);
+      editor.current = new Set();
+      if (awareness.getLocalState()) {
+        awareness.setLocalStateField("user", {
+          ...awareness.getLocalState().user,
+          edited: false,
+        });
+      }
+      else {
+        awareness.setLocalStateField("user", {
+          edited: false
+        })
+      }
+      window.dispatchEvent(new CustomEvent("versionStoreUpdated"));
+      setOriginalText(textareaString);
+      clearInterval(updateInterval);
+    }
   }, [db, yText, originalText, awareness]);
 
   const resetLocalAwarenessCursors = React.useCallback(() => {
