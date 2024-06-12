@@ -1,65 +1,64 @@
-import { useEffect, useRef, forwardRef } from "react";
+import React from "react";
 import Delta from "quill-delta";
 
 function bindingTextarea(textarea, opts) {
-  const recoverSetter = hackValueSetter();
-
   const { onTextChange, onSelectionChange } = opts;
-
-  let isComposing = false;
-  let range = [-1, -1];
-  let value = textarea.value;
-
-  handleSelectionChange();
-
-  textarea.addEventListener("input", handleInput);
-  document.addEventListener("compositionstart", handleCompositionStart);
-  document.addEventListener("compositionend", handleCompositionEnd);
-  document.addEventListener("selectionchange", handleSelectionChange);
+  let currentSelectionRange = [-1, -1];
+  let currentText = textarea.value;
+  let isEditing = false;
+  registerEventListeners();
 
   return () => {
-    recoverSetter();
-
-    textarea.removeEventListener("input", handleInput);
-    document.removeEventListener("compositionstart", handleCompositionStart);
-    document.removeEventListener("compositionend", handleCompositionEnd);
-    document.removeEventListener("selectionchange", handleSelectionChange);
+    removeEventListeners();
   };
 
   function handleSelectionChange() {
-    if (!textarea || isComposing) {
+    if (!textarea || isEditing) {
       return;
     }
     const { selectionStart, selectionEnd } = textarea;
-    if (range[0] !== selectionStart || range[1] !== selectionEnd) {
-      onSelectionChange?.(selectionStart, selectionEnd);
-      range = [textarea.selectionStart, textarea.selectionEnd];
+    if (
+      currentSelectionRange[0] !== selectionStart ||
+      currentSelectionRange[1] !== selectionEnd
+    ) {
+      if (onSelectionChange) {
+        onSelectionChange(selectionStart, selectionEnd);
+      }
+      currentSelectionRange = [textarea.selectionStart, textarea.selectionEnd];
     }
   }
 
   function handleInput(e) {
-    if (e.isComposing) {
+    const eventType = e.inputType;
+    if (e.isEditing) {
       return;
     }
-    const oldRange = range;
-    const oldValue = value;
-    const newValue = textarea.value;
-    const newRange = [textarea.selectionStart, textarea.selectionEnd];
 
-    if (e.inputType.startsWith("history")) {
-      onTextChange?.(e.inputType.endsWith("Undo") ? "undo" : "redo");
+    const oldTAText = currentText;
+    const newTAText = textarea.value;
+    if (eventType.startsWith("history")) {
+      onTextChange?.(eventType.endsWith("Undo") ? "undo" : "redo");
     } else {
       const delta = new Delta();
-      if (e.inputType.startsWith("insert")) {
-        delta.retain(oldRange[0]);
-        if (oldRange[0] !== oldRange[1]) {
-          delta.delete(oldRange[1] - oldRange[0]);
+      const oldSelectionRange = currentSelectionRange;
+      const newSelectionRange = [
+        textarea.selectionStart,
+        textarea.selectionEnd,
+      ];
+      if (eventType.startsWith("insert")) {
+        delta.retain(oldSelectionRange[0]);
+        if (oldSelectionRange[0] !== oldSelectionRange[1]) {
+          delta.delete(oldSelectionRange[1] - oldSelectionRange[0]);
         }
-        delta.insert(newValue.substring(oldRange[0], newRange[0]));
-      } else if (e.inputType.startsWith("delete")) {
-        delta.retain(newRange[0]).delete(oldValue.length - newValue.length);
+        delta.insert(
+          newTAText.substring(oldSelectionRange[0], newSelectionRange[0])
+        );
+      } else if (eventType.startsWith("delete")) {
+        delta
+          .retain(newSelectionRange[0])
+          .delete(oldTAText.length - newTAText.length);
       } else {
-        throw new Error("Unknown inputType: " + e.inputType);
+        throw new Error("Unknown eventType: " + eventType);
       }
       onTextChange?.(delta.ops);
       handleSelectionChange();
@@ -67,65 +66,84 @@ function bindingTextarea(textarea, opts) {
   }
 
   function handleCompositionStart() {
-    isComposing = true;
+    isEditing = true;
   }
 
   function handleCompositionEnd() {
-    isComposing = false;
+    isEditing = false;
     handleInput({
       inputType: "insertText",
-      isComposing: false
+      isEditing: false,
     });
   }
 
-  function hackValueSetter() {
-    const { set, ...rest } = Reflect.getOwnPropertyDescriptor(textarea, "value");
+  // hack the textarea's value setter to get the latest value
+  function captureTextAreaValue() {
+    const { set, ...whateverleft } = Reflect.getOwnPropertyDescriptor(
+      textarea,
+      "value"
+    );
     Reflect.defineProperty(textarea, "value", {
-      ...rest,
-      set(newValue) {
-        value = newValue;
-        set.call(textarea, newValue);
-      }
+      ...whateverleft,
+      set(newTAText) {
+        currentText = newTAText;
+        set.call(textarea, newTAText);
+      },
     });
 
     return () => {
       Reflect.defineProperty(textarea, "value", {
-        ...rest,
-        set
+        ...whateverleft,
+        set,
       });
     };
   }
+
+  function registerEventListeners() {
+    handleSelectionChange();
+    textarea.addEventListener("input", handleInput);
+    document.addEventListener("compositionstart", handleCompositionStart);
+    document.addEventListener("compositionend", handleCompositionEnd);
+    document.addEventListener("selectionchange", handleSelectionChange);
+  }
+
+  function removeEventListeners() {
+    captureTextAreaValue();
+    textarea.removeEventListener("input", handleInput);
+    document.removeEventListener("compositionstart", handleCompositionStart);
+    document.removeEventListener("compositionend", handleCompositionEnd);
+    document.removeEventListener("selectionchange", handleSelectionChange);
+  }
 }
 
-export const Textarea = forwardRef((props, ref) => {
-  const { onTextChange, onSelectionChange, ...rest } = props;
-  const innerRef = useRef();
+export const Textarea = React.forwardRef((props, ref) => {
+  const { onTextChange, onSelectionChange, ...whateverleft } = props;
+  const innerRef = React.useRef();
 
-  useEffect(() => {
-    const textarea = innerRef.current;
-    if (!textarea) return;
-
-    const cleanup = bindingTextarea(textarea, {
+  React.useEffect(() => {
+    if (!innerRef.current) {
+      return;
+    }
+    return bindingTextarea(innerRef.current, {
       onTextChange,
-      onSelectionChange
+      onSelectionChange,
     });
-
-    return cleanup;
   }, [onTextChange, onSelectionChange]);
 
   return (
     <textarea
-      ref={textarea$ => {
-        if (!textarea$) return;
-
-        if (typeof ref === "function") {
-          ref(textarea$);
-        } else if (ref) {
-          ref.current = textarea$;
+      ref={(TARef) => {
+        if (!TARef) {
+          return;
         }
-        innerRef.current = textarea$;
+        if (typeof ref === "function") {
+          ref(TARef);
+        } else if (ref) {
+          ref.current = TARef;
+        }
+        innerRef.current = TARef;
       }}
-      {...rest}
+      {...whateverleft}
     />
   );
 });
