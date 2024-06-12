@@ -39,6 +39,7 @@ function TextPage() {
   const [ref, setRef] = useState();
   const [historyText, setHistoryText] = useState();
   const [isInternetAvailable, setInternetAvailable] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
 
   const checkInternetConnection = useCallback(() => {
     const url = "https://www.google.com/favicon.ico";
@@ -177,6 +178,22 @@ function TextPage() {
     handleSideBarClose();
   };
 
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+  const downloadTextFile = () => {
+    const input$ = ref.current;
+    const blob = new Blob([input$.value], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "textarea-content.txt";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-gray-700">
       {!isInternetAvailable ? (
@@ -202,8 +219,25 @@ function TextPage() {
         </div>
         <div className="flex-grow flex justify-center">
           <div className="mb-[10px] text-white mr-[20px]">Room ID: {room}</div>
-          <div className="mb-[10px] text-white"> Password: {password}</div>
+          <div className="mb-[10px] text-white mr-[10px] flex">
+            Password: {showPassword ? password : "•••••"}
+            <div
+              onClick={togglePasswordVisibility}
+              className=" ml-[10px] w-auto px-[10px] h-[30px] rounded-lg bg-[#322C2B] text-white flex items-center justify-center cursor-pointer"
+            >
+              {showPassword ? "Hide" : "Show"}
+            </div>
+          </div>
         </div>
+        <div className="flex-grow">
+          <div
+            className="w-[100px] px-[10px] h-[30px] rounded-lg bg-[#322C2B] text-white flex items-center justify-center cursor-pointer"
+            onClick={downloadTextFile}
+          >
+            Download
+          </div>
+        </div>
+
         <div
           className="w-auto px-[10px] h-[30px] rounded-lg bg-[#322C2B] text-white flex items-center justify-center cursor-pointer"
           onClick={handleSideBarOpen}
@@ -251,7 +285,7 @@ function TextPage() {
         {historyText ? (
           <div className="w-1/2 flex">
             <div
-              className="flex-grow px-[12px] py-[16px] text-[24px] mr-[8px] border border-black resize-none bg-white rounded-md"
+              className="flex-grow px-[12px] py-[16px] text-[24px] mr-[8px] border border-black bg-white rounded-md break-all"
               dangerouslySetInnerHTML={{
                 __html: DOMPurify.sanitize(historyText.diff),
               }}

@@ -7,7 +7,7 @@ let updateInterval = setInterval(() => {}, 1000);
 
 const useAwarenessUserInfos = (awareness, editor) => {
   const [userInfos, setUserInfos] = useState([]);
-  
+
   useEffect(() => {
     if (!awareness) return;
 
@@ -25,7 +25,7 @@ const useAwarenessUserInfos = (awareness, editor) => {
           };
         })
       );
-      console.log(awareness.getStates());
+      //console.log(awareness.getStates());
     };
 
     updateUserInfos();
@@ -61,7 +61,9 @@ export const YjsTextarea = (props) => {
   const [originalText, setOriginalText] = useState("");
 
   const undoManager = useMemo(() => {
-    return yText ? new Y.UndoManager(yText, { captureTimeout: 200 }) : undefined;
+    return yText
+      ? new Y.UndoManager(yText, { captureTimeout: 200 })
+      : undefined;
   }, [yText]);
 
   const uploadToIndexeddb = useCallback(async () => {
@@ -168,7 +170,13 @@ export const YjsTextarea = (props) => {
         yDoc.off("update", syncFromYDoc);
       };
     }
-  }, [yText, undoManager, resetLocalAwarenessCursors, awareness, uploadToIndexeddb]);
+  }, [
+    yText,
+    undoManager,
+    resetLocalAwarenessCursors,
+    awareness,
+    uploadToIndexeddb,
+  ]);
 
   const renderUserIndicator = useCallback(
     (userInfo) => {
@@ -189,6 +197,7 @@ export const YjsTextarea = (props) => {
             key={userInfo.id + "_" + idx}
             className="user-indicator"
             style={{
+              "--user-color": userInfo.color,
               left: rect.left - overlayRect.left,
               top: rect.top - overlayRect.top,
               width: rect.width,
@@ -241,7 +250,7 @@ export const YjsTextarea = (props) => {
       };
     }
   }, []);
-  
+
   useEffect(() => {
     setRef(ref);
   }, [ref, setRef]);

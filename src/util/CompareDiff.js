@@ -173,4 +173,4 @@ function diff(o, n) {
   return { o: o, n: n };
 }
 
-console.log(diffString("abcd efghi", "abcd ghijkl"));
+//console.log(diffString("abcd efghi", "abcd ghijkl"));
