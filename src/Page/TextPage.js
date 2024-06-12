@@ -27,7 +27,7 @@ function capitalizeFirstLetter(string) {
 }
 
 function TextPage() {
-  const room = "bd41f337-1dfe-4f97-a478-c73428f4ab22";
+  const { room } = useContext(RoomContext);
   const { password } = useContext(PasswordContext);
   const [yText, setYText] = useState();
   const [awareness, setAwareness] = useState();
@@ -211,9 +211,7 @@ function TextPage() {
           Text History
         </div>
       </div>
-      <div
-        className="w-[300px] bg-[#322C2B] fixed top-0 right-0 h-full z-10 backdrop-blur-sm bg-opacity-90 shadow overflow-y-auto flex flex-col gap-y-[15px] sidebar"
-      >
+      <div className="w-[300px] bg-[#322C2B] fixed top-0 right-0 h-full z-10 backdrop-blur-sm bg-opacity-90 shadow overflow-y-auto flex flex-col gap-y-[15px] sidebar">
         <div className="relative">
           <img
             src="/img/close.png"
