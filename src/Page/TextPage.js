@@ -289,7 +289,7 @@ function TextPage() {
         )}
       </div>
       <div className="w-full flex-grow flex flex-col lg:flex-row">
-        <div className="h-[400px] lg:h-full lg:flex-grow flex flex-col justify-center items-center">
+        <div className="min-h-[400px] h-full lg:h-full flex-grow flex flex-col justify-center items-center">
           <YjsTextarea
             yText={yText}
             awareness={awareness}
