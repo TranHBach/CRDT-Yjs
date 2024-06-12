@@ -52,7 +52,10 @@ function Landing() {
             <img src="./img/edit.png" alt="" className="h-3/4 " />
             <p>New Text Area</p>
           </div>
-          <form className="flex gap-x-[10px]" onSubmit={handleJoinRoom}>
+          <form
+            className="flex flex-col gap-y-3 lg:flex-row lg:gap-x-[10px] lg:gap-y-0"
+            onSubmit={handleJoinRoom}
+          >
             <div
               className="flex justify-between items-center border h-[40px] w-[180px] cursor-pointer select-none
           px-[10px] py-[5px] rounded-[10px]"
@@ -68,19 +71,22 @@ function Landing() {
                 value={text}
                 onChange={handleRoomChange}
                 className="flex-grow w-full focus:outline-none"
-                placeholder="Enter Room Code"
+                placeholder="RoomID"
               />
             </div>
-            <button
-              className={`${
-                text.trim() === ""
-                  ? "text-[#3C4043] text-opacity-50"
-                  : "text-[#1A73E8] hover:bg-[#9ddfe4] hover:bg-opacity-10 transition-all"
-              } flex justify-center items-center w-[50px] rounded-[6px]`}
-              disabled={text.trim() === ""}
-            >
-              Join
-            </button>
+            <div className="flex w-full justify-center items-center lg:w-auto">
+              <button
+                className={`${
+                  text.trim() === ""
+                    ? "text-[#3C4043] text-opacity-50"
+                    : "text-[#1A73E8] hover:bg-[#9ddfe4] hover:bg-opacity-10 transition-all"
+                } flex justify-center items-center w-[50px] rounded-[6px]`}
+                disabled={text.trim() === ""}
+              >
+                Join
+              </button>
+            </div>
+
             <div
               className="flex justify-between items-center border h-[40px] w-[180px] cursor-pointer select-none
           px-[10px] py-[5px] rounded-[10px]"
@@ -96,7 +102,7 @@ function Landing() {
                 value={textPass}
                 onChange={handlePasswordChange}
                 className="flex-grow w-full focus:outline-none"
-                placeholder="Enter Room Password"
+                placeholder="Password"
               />
             </div>
           </form>
