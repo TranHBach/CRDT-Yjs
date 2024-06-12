@@ -194,15 +194,19 @@ function TextPage() {
     URL.revokeObjectURL(url);
   };
 
+  const handleCopy = () => {
+    navigator.clipboard.writeText(room);
+  };
+
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-gray-700">
+    <div className="flex flex-col items-center justify-center min-h-screen lg:h-screen bg-gray-700">
       {!isInternetAvailable ? (
         <div className="text-white">Trying to restore connection...</div>
       ) : (
         ""
       )}
-      <div className="flex w-full items-center px-[10px]">
-        <div className="flex items-center">
+      <div className="flex w-full items-center px-[10px] flex-col gap-y-3 lg:flex-row lg:gap-y-0">
+        <div className="flex items-center mt-[10px] lg:mt-0">
           <input
             type="text"
             value={name}
@@ -217,8 +221,19 @@ function TextPage() {
             Change Name
           </div>
         </div>
-        <div className="flex-grow flex justify-center">
-          <div className="mb-[10px] text-white mr-[20px]">Room ID: {room}</div>
+        <div className="flex flex-col justify-center items-center lg:flex-row lg:flex-grow ">
+          <div className="flex items-center justify-center mr-[20px] gap-x-[5px]">
+            <div className="mb-[10px] text-white flex items-center justify-center">
+              Room ID: {room}
+            </div>
+            <img
+              src="img/copy.png"
+              alt=""
+              className="h-[25px] w-auto cursor-pointer"
+              onClick={handleCopy}
+            />
+          </div>
+
           <div className="mb-[10px] text-white mr-[10px] flex">
             Password: {showPassword ? password : "•••••"}
             <div
@@ -273,8 +288,8 @@ function TextPage() {
           )
         )}
       </div>
-      <div className="w-full flex-grow flex">
-        <div className="h-full flex-grow flex flex-col justify-center items-center">
+      <div className="w-full flex-grow flex flex-col lg:flex-row">
+        <div className="h-[400px] lg:h-full lg:flex-grow flex flex-col justify-center items-center">
           <YjsTextarea
             yText={yText}
             awareness={awareness}
@@ -283,9 +298,9 @@ function TextPage() {
           />
         </div>
         {historyText ? (
-          <div className="w-1/2 flex">
+          <div className="h-1/2 w-full lg:h-auto lg:w-1/2 flex flex-col lg:flex-row px-[8px] gap-y-2 lg:gap-y-0">
             <div
-              className="flex-grow px-[12px] py-[16px] text-[24px] mr-[8px] border border-black bg-white rounded-md break-all"
+              className="flex-grow px-[12px] py-[16px] text-[24px] lg:mr-[8px] border border-black bg-white rounded-md break-all"
               dangerouslySetInnerHTML={{
                 __html: DOMPurify.sanitize(historyText.diff),
               }}

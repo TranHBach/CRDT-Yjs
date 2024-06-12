@@ -256,9 +256,9 @@ export const YjsTextarea = (props) => {
   }, [ref, setRef]);
 
   return (
-    <div className="text-container">
+    <div className="relative w-[calc(100%-16px)] flex-grow border border-black rounded-lg bg-white flex flex-col">
       <Textarea
-        className="input"
+        className="inline-block text-2xl w-full h-full whitespace-pre-wrap resize-none border-none p-3 bg-transparent break-words m-0 flex-grow focus:outline-none"
         ref={ref}
         onSelectionChange={resetLocalAwarenessCursors}
         onTextChange={handleLocalTextChange}
